@@ -21,7 +21,9 @@ for($i = 0; $i < $count_pets; $i++)
 	$output .= '<div class="petfinderStats petfinderSnippet">';
 	$output .= '<dl class="petfinderBio">';
 	$output .= '<dt class="petfinderBioLabel">Age</dt><dd class="petfinderBioData">'.$current_pet->age.'</dd>';
-	$output .= '<dt class="petfinderBioLabel">Sex</dt><dd class="petfinderBioData">x'.$current_pet->sex.'</dd>';
+
+	if(array_key_exists((string)$current_pet->sex, $legend['legend_sex']))
+		$output .= '<dt class="petfinderBioLabel">Sex</dt><dd class="petfinderBioData">'.$legend['legend_sex'][(string)$current_pet->sex].'</dd>';
 
 	$output .= '<dt class="petfinderBioLabel">Breed</dt><dd class="petfinderBioData">';
 

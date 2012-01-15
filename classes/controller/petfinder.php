@@ -29,7 +29,7 @@ class Controller_Petfinder extends Controller_TemplateIndex {
 		{
 			$shelter_pets = (array)$adoptable->pets;
 
-			$shelter_pets['legend'] = Kohana::$config->load('petfinder.legend');
+			$shelter_pets['legend'] = Kohana::message('petfinder');
 			$shelter_pets['url_details'] = Kohana::$config->load('petfinder.url_route').'/details/';
 
 			$this->template->content = View::factory('petfinder_multi', $shelter_pets);
