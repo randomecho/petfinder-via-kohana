@@ -16,6 +16,7 @@ $output .= '<div class="petfinderInfo">';
 $output .= $current_pet->description;
 $output .= '</div>';
 
+
 $output .= '<dl class="petfinderBio">';
 $output .= '<dt class="petfinderBioLabel">Petfinder ID</dt><dd class="petfinderBioData">'.$current_pet->id.'</dd>';
 $output .= '<dt class="petfinderBioLabel">Age</dt><dd class="petfinderBioData">'.$current_pet->age.'</dd>';
@@ -24,23 +25,39 @@ $output .= '<dt class="petfinderBioLabel">Sex</dt><dd class="petfinderBioData">'
 
 $output .= '<dt class="petfinderBioLabel">Breed</dt><dd class="petfinderBioData">';
 
-if($current_pet->mix == 'yes')
-	$output .= 'Mix of ';
+$count_breeds = count($current_pet->breeds->breed);
 
-foreach($current_pet->breeds->breed as $pet_breed)
+if($count_breeds == 1)
 {
-	$output .= $pet_breed.', ';
+	$output .= $current_pet->breeds->breed;
 }
+else
+{
+	$breeds = '';
+
+	foreach($current_pet->breeds->breed as $pet_breed)
+	{
+		$breeds .= $pet_breed. ' and ';
+	}
+
+	$output .= substr($breeds, 0, strrpos($breeds, ' and'));
+}
+
+$output .= ($current_pet->mix == 'yes') ? ' mix' : '';
 
 $output .= '</dd>';
 
 if(isset($options))
 {
 	$output .= '<dt class="petfinderBioLabel">Details</dt><dd class="petfinderBioData">';
+	$output .= '<ul>';
+
 	foreach($options as $pet_data)
 	{
-		$output .= $pet_data.', ';
+		$output .= '<li>'.$pet_data.'</li>';
 	}
+
+	$output .= '</ul>';
 	$output .= '</dd>';
 }
 
@@ -58,7 +75,10 @@ if($current_pet->status == 'A')
 
 $output .= '</dl>';
 $output .= '</div>';
+
 $output .= '</div>';
+
 $output .= '<p>'.HTML::anchor($url_main, 'Back to main list of pets').'</p>';
 
 echo $output;
+

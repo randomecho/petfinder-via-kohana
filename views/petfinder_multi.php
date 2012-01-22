@@ -27,19 +27,32 @@ for($i = 0; $i < $count_pets; $i++)
 
 	$output .= '<dt class="petfinderBioLabel">Breed</dt><dd class="petfinderBioData">';
 
-	if($current_pet->mix == 'yes')
-		$output .= 'Mix of ';
+	$count_breeds = count($current_pet->breeds->breed);
 
-	foreach($current_pet->breeds->breed as $pet_breed)
+	if($count_breeds == 1)
 	{
-		$output .= $pet_breed.', ';
+		$output .= $current_pet->breeds->breed;
 	}
+	else
+	{
+		$breeds = '';
+
+		foreach($current_pet->breeds->breed as $pet_breed)
+		{
+			$breeds .= $pet_breed. ' and ';
+		}
+
+		$output .= substr($breeds, 0, strrpos($breeds, ' and'));
+	}
+
+	$output .= ($current_pet->mix == 'yes') ? ' mix' : '';
 
 	$output .= '</dd>';
 	$output .= '</dl>';
-
 	$output .= '</div>';
+
 	$output .= '</div>';
 }
 
 echo $output;
+
