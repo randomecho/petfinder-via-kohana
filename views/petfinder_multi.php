@@ -13,8 +13,12 @@ for($i = 0; $i < $count_pets; $i++)
 	$output .= '<div class="petinfo">';
 	$output .= HTML::anchor($url_details.$current_pet->id.'-'.URL::title($current_pet->name), '<h3>'.$current_pet->name.'</h3>');
 
+	if(isset($current_pet->media->photos) && count($current_pet->media->photos) > 0)
+		$thumbnail = $current_pet->media->photos->photo[1];
+	else
+		$thumbnail = Kohana::$config->load('petfinder.image_none');
+
 	$output .= '<div class="petfinderThumb">';
-	$thumbnail = $current_pet->media->photos->photo[1];
 	$output .= HTML::anchor($url_details.$current_pet->id.'-'.URL::title($current_pet->name), HTML::image($thumbnail));
 	$output .= '</div>';
 

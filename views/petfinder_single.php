@@ -7,7 +7,11 @@ $current_pet = $pet;
 $output .= '<div class="petinfo">';
 $output .= '<h1>'.$current_pet->name.$status_heading.'</h1>';
 
-$thumbnail = $current_pet->media->photos->photo[0];
+if(isset($current_pet->media->photos) && count($current_pet->media->photos) > 0)
+	$thumbnail = $current_pet->media->photos->photo[0];
+else
+	$thumbnail = Kohana::$config->load('petfinder.image_none');
+
 $output .= HTML::image($thumbnail, array('title' => $current_pet->name));
 
 $output .= '<div class="petfinderStats">';
@@ -16,11 +20,9 @@ $output .= '<div class="petfinderInfo">';
 $output .= $current_pet->description;
 $output .= '</div>';
 
-
 $output .= '<dl class="petfinderBio">';
 $output .= '<dt class="petfinderBioLabel">Petfinder ID</dt><dd class="petfinderBioData">'.$current_pet->id.'</dd>';
 $output .= '<dt class="petfinderBioLabel">Age</dt><dd class="petfinderBioData">'.$current_pet->age.'</dd>';
-
 $output .= '<dt class="petfinderBioLabel">Sex</dt><dd class="petfinderBioData">'.$legend_sex.'</dd>';
 
 $output .= '<dt class="petfinderBioLabel">Breed</dt><dd class="petfinderBioData">';
@@ -75,7 +77,6 @@ if($current_pet->status == 'A')
 
 $output .= '</dl>';
 $output .= '</div>';
-
 $output .= '</div>';
 
 $output .= '<p>'.HTML::anchor($url_main, 'Back to main list of pets').'</p>';

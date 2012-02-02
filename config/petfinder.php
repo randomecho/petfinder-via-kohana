@@ -5,6 +5,8 @@ return array(
 	'api_secret' => 'YOUR_API_SECRET',
 	'shelter_id' => 'YOUR_SHELTER_ID',
 
+	'image_none' => 'images/no-petfinder.png',
+
 	'api_url' => 'http://api.petfinder.com/',
 	'url_route' => 'petfinder',
 
