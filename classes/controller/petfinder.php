@@ -43,6 +43,7 @@ class Controller_Petfinder extends Controller_TemplateIndex {
 			$this->template->content = View::factory('petfinder_none', $info);
 		}
 
+		$this->template->title = Kohana::message('petfinder', 'meta.title').' - '.$this->template->title;
 	}
 
 	/**
@@ -81,6 +82,7 @@ class Controller_Petfinder extends Controller_TemplateIndex {
 			$shelter_pets['url_main'] = Kohana::$config->load('petfinder.url_route');
 
 			$this->template->content = View::factory('petfinder_single', $shelter_pets);
+			$this->template->title = $pet_details->pet->name.$shelter_pets['status_heading'].' - '.$this->template->title;
 		}
 		else
 		{
@@ -89,6 +91,7 @@ class Controller_Petfinder extends Controller_TemplateIndex {
 			$info['error_heading'] = Kohana::message('petfinder', 'error.invalid_heading');
 
 			$this->template->content = View::factory('petfinder_none', $info);
+			$this->template->title = Kohana::message('petfinder', 'meta.invalid').' - '.$this->template->title;
 		}
 
 	}

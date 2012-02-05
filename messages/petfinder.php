@@ -28,13 +28,13 @@ return array(
 	),
 
 	'legend_options' => array(
-		'altered' => 'Spayed/Neutered',
+		'altered' => 'spayed/neutered',
 		'hasShots' => 'current on vaccinations',
 		'housebroken' => 'house broken',
 		'noCats' => 'prefers home with no cats',
 		'noDogs' => 'prefers home with no dogs',
 		'noKids' => 'prefers home with no children',
-		'specialNeeds' => 'Requires special care',
+		'specialNeeds' => 'requires special care',
 	),
 
 	'error' => array(
@@ -43,4 +43,10 @@ return array(
 		'invalid' => 'Invalid pet ID.',
 		'invalid_heading' => 'No pet found.',
 	),
+
+	'meta' => array(
+		'title' => 'Adoptable pets',
+		'invalid' => 'No pet found',
+	),
+
 );
