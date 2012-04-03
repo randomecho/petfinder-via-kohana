@@ -7,7 +7,7 @@ $current_pet = $pet;
 $output .= '<div class="petinfo">';
 $output .= '<h1>'.$current_pet->name.$status_heading.'</h1>';
 
-if(isset($current_pet->media->photos) && count($current_pet->media->photos) > 0)
+if (isset($current_pet->media->photos) AND count($current_pet->media->photos) > 0)
 	$thumbnail = $current_pet->media->photos->photo[0];
 else
 	$thumbnail = Kohana::$config->load('petfinder.image_none');
@@ -29,7 +29,7 @@ $output .= '<dt class="petfinderBioLabel">Breed</dt><dd class="petfinderBioData"
 
 $count_breeds = count($current_pet->breeds->breed);
 
-if($count_breeds == 1)
+if ($count_breeds == 1)
 {
 	$output .= $current_pet->breeds->breed;
 }
@@ -37,9 +37,9 @@ else
 {
 	$breeds = '';
 
-	foreach($current_pet->breeds->breed as $pet_breed)
+	foreach ($current_pet->breeds->breed as $pet_breed)
 	{
-		$breeds .= $pet_breed. ' and ';
+		$breeds .= $pet_breed.' and ';
 	}
 
 	$output .= substr($breeds, 0, strrpos($breeds, ' and'));
@@ -49,12 +49,12 @@ $output .= ($current_pet->mix == 'yes') ? ' mix' : '';
 
 $output .= '</dd>';
 
-if(isset($options))
+if (isset($options))
 {
 	$output .= '<dt class="petfinderBioLabel">Details</dt><dd class="petfinderBioData">';
 	$output .= '<ul>';
 
-	foreach($options as $pet_data)
+	foreach ($options as $pet_data)
 	{
 		$output .= '<li>'.$pet_data.'</li>';
 	}
@@ -63,13 +63,13 @@ if(isset($options))
 	$output .= '</dd>';
 }
 
-if($current_pet->status == 'A')
+if ($current_pet->status == 'A')
 {
 	$output .= '<dt class="petfinderBioLabel">Contact</dt>';
 
 	$name_contact = ($current_pet->contact->name != '') ? $current_pet->contact->name : 'Contact us';
 
-	if($current_pet->contact->email != '')
+	if ($current_pet->contact->email != '')
 		$output .= '<dd class="petfinderBioData">'.HTML::mailto($current_pet->contact->email.'?subject=Petfinder: '.$current_pet->name, $name_contact).'</dd>';
 	else
 		$output .= '<dd class="petfinderBioData">'.HTML::anchor('http://www.petfinder.com/petdetail/'.$current_pet->id, 'See contact details on Petfinder').'</dd>';

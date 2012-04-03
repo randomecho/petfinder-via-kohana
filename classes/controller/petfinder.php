@@ -25,9 +25,9 @@ class Controller_Petfinder extends Controller_TemplateIndex {
 								'?key='.Kohana::$config->load('petfinder.api_key').
 								'&id='.Kohana::$config->load('petfinder.shelter_id'));
 
-		if($adoptable->header->status->code == 100 && count((array)$adoptable->pets) > 0)
+		if ($adoptable->header->status->code == 100 AND count( (array) $adoptable->pets) > 0)
 		{
-			$shelter_pets = (array)$adoptable->pets;
+			$shelter_pets = (array) $adoptable->pets;
 
 			$shelter_pets['legend'] = Kohana::message('petfinder');
 			$shelter_pets['url_details'] = Kohana::$config->load('petfinder.url_route').'/details/';
@@ -57,24 +57,24 @@ class Controller_Petfinder extends Controller_TemplateIndex {
 		$id_pet = $this->request->param('id');
 
 		// reject as invalid if not parsed by the site with nice url featuring pet name
-		if(!stristr($id_pet, '-'))
+		if ( ! stristr($id_pet, '-'))
 			Request::current()->redirect($this->template->baseurl.Kohana::$config->load('petfinder.url_route'));
 
 		$url_pet = explode('-', $id_pet);
-		$id_pet = (int)$url_pet[0];
+		$id_pet = (int) $url_pet[0];
 
 		$pet_details = simplexml_load_file(Kohana::$config->load('petfinder.api_url').
 								Kohana::$config->load('petfinder.get_pet').
 								'?key='.Kohana::$config->load('petfinder.api_key').
 								'&id='.$id_pet);
 
-		if($pet_details->header->status->code == 100)
+		if ($pet_details->header->status->code == 100)
 		{
 			$shelter_pets['pet'] = $pet_details->pet;
 			$shelter_pets['status_heading'] = Kohana::message('petfinder', 'status_heading.'.$pet_details->pet->status);
 			$shelter_pets['legend_sex'] = Kohana::message('petfinder', 'legend_sex.'.$pet_details->pet->sex);
 
-			foreach($pet_details->pet->options->option as $option)
+			foreach ($pet_details->pet->options->option as $option)
 			{
 				$shelter_pets['options'][] = Kohana::message('petfinder', 'legend_options.'.$option);
 			}
