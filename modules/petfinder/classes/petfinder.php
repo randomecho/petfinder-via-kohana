@@ -91,6 +91,34 @@ class Petfinder {
 	}
 
 	/**
+	 * Fetches a list of breeds per animal type chosen
+	 *
+	 * @param   string   Petfinder pet ID
+	 * @return  array
+	 * @uses    Kohana::$config
+	 * @uses    Petfinder::connect
+	 * @throws  Kohana_Exception
+	 */
+	public static function breeds($animal)
+	{
+		$format_type = Kohana::$config->load('petfinder.format');
+
+		if (trim($animal) == '')
+		{
+			throw new Kohana_Exception('Please specify an animal to see its breeds. You can select from: barnyard, bird, cat, dog, horse, pig, reptile and smallfurry');
+		}
+
+		$response = Petfinder::connect('breed.list', '&animal='.$animal);
+
+		foreach ($response['breeds']->breed as $breed_type)
+		{
+			$all_breeds[] = ($format_type == 'xml') ? $breed_type : $breed_type->{'$t'};
+		}
+
+		return $all_breeds;
+	}
+
+	/**
 	 * Return the full details of single pet specified by its Petfinder ID
 	 *
 	 * @param   string   Petfinder pet ID
@@ -107,6 +135,33 @@ class Petfinder {
 		}
 
 		$response = Petfinder::connect('pet.get', '&id='.$pet_id);
+
+		$pet_details = Petfinder::pet_vars($response['pet']);
+
+		return $pet_details;
+	}
+
+	/**
+	 * Generate the random API return with optional parameters to narrow the random selection
+	 *
+	 * @param   string   API search parameters
+	 * @return  array
+	 * @uses    Petfinder::connect
+	 * @uses    Petfinder::pet_vars
+	 */
+	public static function random($search = '')
+	{
+		if (is_array($search) AND count($search) > 0)
+		{
+			foreach ($search as $search_key => $search_type)
+			{
+				$search_keys[] = $search_key.'='.$search_type;
+			}
+
+			$search = implode('&', $search_keys);
+		}
+
+		$response = Petfinder::connect('pet.getRandom', '&output=full&'.$search);
 
 		$pet_details = Petfinder::pet_vars($response['pet']);
 
