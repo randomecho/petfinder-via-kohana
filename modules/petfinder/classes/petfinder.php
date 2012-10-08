@@ -2,7 +2,7 @@
 /**
  * Petfinder via Kohana
  *
- * Class wrapper for the Petfinder.com API using Kohana 3.2
+ * Wrapper for the Petfinder.com API using Kohana 3.2
  *
  * @package    Petfinder
  * @author     Soon Van - randomecho.com
@@ -169,6 +169,130 @@ class Petfinder {
 	}
 
 	/**
+	 * Sends for and returns results for searching pets
+	 *
+	 * @param   string   API search parameters
+	 * @return  array
+	 * @uses    Kohana::$config
+	 * @uses    Petfinder::search
+	 * @uses    Petfinder::pet_vars
+	 */
+	public static function search_pets($query = '')
+	{
+		$format_type = Kohana::$config->load('petfinder.format');
+
+		$query['output'] = 'full';
+
+		$response = Petfinder::search('pet.find', $query);
+
+		$search_results['lastOffset'] = ($format_type == 'xml') ? $response['lastOffset'] : $response['lastOffset']->{'$t'};
+		$pets_found = $response['pets']->pet;
+
+		foreach ($pets_found as $pet_id => $pet)
+		{
+			$results[] = Petfinder::pet_vars($pet);
+		}
+
+		$search_results['results'] = $results;
+
+		return $search_results;
+	}
+
+	/**
+	 * Sends for and returns results for searching shelters
+	 *
+	 * @param   string   API search parameters
+	 * @return  array
+	 * @uses    Kohana::$config
+	 * @uses    Petfinder::search
+	 * @uses    Petfinder::shelter_vars
+	 */
+	public static function search_shelters($query = '')
+	{
+		$format_type = Kohana::$config->load('petfinder.format');
+
+		$response = Petfinder::search('shelter.find', $query);
+
+		$search_results['lastOffset'] = ($format_type == 'xml') ? $response['lastOffset'] : $response['lastOffset']->{'$t'};
+		$shelters_found = $response['shelters']->shelter;
+
+		foreach ($shelters_found as $shelter_id => $shelter)
+		{
+			$results[] = Petfinder::shelter_vars($shelter);
+		}
+
+		$search_results['results'] = $results;
+
+		return $search_results;
+	}
+
+	/**
+	 * Format the array to send to the API resource to trigger the search.
+	 * Checks that a location is supplied in the array as it is a required parameter.
+	 *
+	 * @param   string   API search method
+	 * @param   array    search parameters to send
+	 * @return  object
+	 * @uses    Kohana::$config
+	 * @uses    Petfinder::connect
+	 * @uses    Petfinder::shelter_vars
+	 * @throws  Kohana_Exception
+	 */
+	public static function shelter($shelter_id)
+	{
+		$format_type = Kohana::$config->load('petfinder.format');
+
+		if (trim($shelter_id) == '')
+		{
+			throw new Kohana_Exception('Please specify a shelter ID');
+		}
+
+		$response = Petfinder::connect('shelter.get', '&id='.$shelter_id);
+
+		$profile = Petfinder::shelter_vars($response['shelter']);
+
+		return $profile;
+	}
+
+	/**
+	 * Format the array to send to the API resource to trigger the search.
+	 * Checks that a location is supplied in the array as it is a required parameter.
+	 *
+	 * @param   string   API search method
+	 * @param   array    search parameters to send
+	 * @return  object
+	 * @uses    Petfinder::connect
+	 * @throws  Kohana_Exception
+	 */
+	public static function search($search_mode, $query = '')
+	{
+		if (is_array($query))
+		{
+			if (isset($query['location']))
+			{
+				foreach ($query as $search_key => $search_type)
+				{
+					$search_keys[] = $search_key.'='.$search_type;
+				}
+
+				$query = implode('&', $search_keys);
+			}
+			else
+			{
+				throw new Kohana_Exception('Please enter at least a location to search against.');
+			}
+		}
+		else
+		{
+			throw new Kohana_Exception('Please enter at least a location to search against.');
+		}
+
+		$response = Petfinder::connect($search_mode, '&'.$query);
+
+		return $response;
+	}
+
+	/**
 	 * Re-save the values of a pet sent back as plain array, making less format type checking
 	 * work for controllers/views when dealing against the XML or JSON format returned.
 	 *
@@ -310,6 +434,54 @@ class Petfinder {
 		}
 
 		return $pet_details;
+	}
+
+	/**
+	 * Re-save the values of a shelter sent back as plain array, making less format type checking
+	 * work for controllers/views when dealing against the XML or JSON format returned.
+	 *
+	 * @param   object   values from resource in either an XML or JSON formatted object
+	 * @return  array
+	 * @uses    Kohana::$config
+	 */
+	protected static function shelter_vars($raw_info)
+	{
+		$format_type = Kohana::$config->load('petfinder.format');
+
+		if ($format_type == 'xml')
+		{
+			$details['id'] = (isset($raw_info->id)) ? $raw_info->id : '';
+			$details['name'] = (isset($raw_info->name)) ? $raw_info->name : '';
+			$details['email'] = (isset($raw_info->email)) ? $raw_info->email : '';
+			$details['address1'] = (isset($raw_info->address1)) ? $raw_info->address1 : '';
+			$details['address2'] = (isset($raw_info->address2)) ? $raw_info->address2 : '';
+			$details['city'] = (isset($raw_info->city)) ? $raw_info->city : '';
+			$details['state'] = (isset($raw_info->state)) ? $raw_info->state : '';
+			$details['zip'] = (isset($raw_info->zip)) ? $raw_info->zip : '';
+			$details['country'] = (isset($raw_info->country)) ? $raw_info->country : '';
+			$details['phone'] = (isset($raw_info->phone)) ? $raw_info->phone : '';
+			$details['fax'] = (isset($raw_info->fax)) ? $raw_info->fax : '';
+			$details['longitude'] = (isset($raw_info->longitude)) ? $raw_info->longitude : '';
+			$details['latitude'] = (isset($raw_info->latitude)) ? $raw_info->latitude : '';
+		}
+		else
+		{
+			$details['id'] = (isset($raw_info->id->{'$t'})) ? $raw_info->id->{'$t'} : '';
+			$details['name'] = (isset($raw_info->name->{'$t'})) ? $raw_info->name->{'$t'} : '';
+			$details['email'] = (isset($raw_info->email->{'$t'})) ? $raw_info->email->{'$t'} : '';
+			$details['address1'] = (isset($raw_info->address1->{'$t'})) ? $raw_info->address1->{'$t'} : '';
+			$details['address2'] = (isset($raw_info->address2->{'$t'})) ? $raw_info->address2->{'$t'} : '';
+			$details['city'] = (isset($raw_info->city->{'$t'})) ? $raw_info->city->{'$t'} : '';
+			$details['state'] = (isset($raw_info->state->{'$t'})) ? $raw_info->state->{'$t'} : '';
+			$details['zip'] = (isset($raw_info->zip->{'$t'})) ? $raw_info->zip->{'$t'} : '';
+			$details['country'] = (isset($raw_info->country->{'$t'})) ? $raw_info->country->{'$t'} : '';
+			$details['phone'] = (isset($raw_info->phone->{'$t'})) ? $raw_info->phone->{'$t'} : '';
+			$details['fax'] = (isset($raw_info->fax->{'$t'})) ? $raw_info->fax->{'$t'} : '';
+			$details['longitude'] = (isset($raw_info->longitude->{'$t'})) ? $raw_info->longitude->{'$t'} : '';
+			$details['latitude'] = (isset($raw_info->latitude->{'$t'})) ? $raw_info->latitude->{'$t'} : '';
+		}
+
+		return $details;
 	}
 
 }
