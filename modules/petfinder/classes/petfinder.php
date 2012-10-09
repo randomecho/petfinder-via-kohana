@@ -149,19 +149,19 @@ class Petfinder {
 	 * @uses    Petfinder::connect
 	 * @uses    Petfinder::pet_vars
 	 */
-	public static function random($search = '')
+	public static function random($filter = '')
 	{
-		if (is_array($search) AND count($search) > 0)
+		if (is_array($filter) AND count($filter) > 0)
 		{
-			foreach ($search as $search_key => $search_type)
+			foreach ($filter as $filter_key => $filter_type)
 			{
-				$search_keys[] = $search_key.'='.$search_type;
+				$filter_keys[] = $filter_key.'='.$filter_type;
 			}
 
-			$search = implode('&', $search_keys);
+			$filter = '&'.implode('&', $filter_keys);
 		}
 
-		$response = Petfinder::connect('pet.getRandom', '&output=full&'.$search);
+		$response = Petfinder::connect('pet.getRandom', '&output=full'.$filter);
 
 		$pet_details = Petfinder::pet_vars($response['pet']);
 
@@ -230,8 +230,7 @@ class Petfinder {
 	 * Format the array to send to the API resource to trigger the search.
 	 * Checks that a location is supplied in the array as it is a required parameter.
 	 *
-	 * @param   string   API search method
-	 * @param   array    search parameters to send
+	 * @param   string   shelter ID
 	 * @return  object
 	 * @uses    Kohana::$config
 	 * @uses    Petfinder::connect
@@ -252,6 +251,65 @@ class Petfinder {
 		$profile = Petfinder::shelter_vars($response['shelter']);
 
 		return $profile;
+	}
+
+	/**
+	 * Get a list of Petfinder IDs that belong to an individual shelter
+	 *
+	 * @param   string   shelter ID
+	 * @param   array    search parameters to send
+	 * @return  array
+	 * @uses    Kohana::$config
+	 * @uses    Petfinder::connect
+	 * @uses    Petfinder::shelter_vars
+	 * @throws  Kohana_Exception
+	 */
+	public static function shelter_pets($shelter_id, $filter = '')
+	{
+		$format_type = Kohana::$config->load('petfinder.format');
+
+		if (trim($shelter_id) == '')
+		{
+			throw new Kohana_Exception('Please specify a shelter ID');
+		}
+
+		if (is_array($filter) AND count($filter) > 0)
+		{
+			foreach ($filter as $filter_key => $filter_type)
+			{
+				$filter_keys[] = $filter_key.'='.$filter_type;
+			}
+
+			$filter = '&'.implode('&', $filter_keys);
+		}
+		else
+		{
+			$filter = '';
+		}
+
+		$response = Petfinder::connect('shelter.getPets', '&output=full&id='.$shelter_id.$filter);
+		$results = array();
+
+		if (isset($response['pets']->pet))
+		{
+			$pets_found = $response['pets']->pet;
+
+			if (count($pets_found) > 1)
+			{
+				foreach ($pets_found as $pet_id => $pet)
+				{
+					$results[] = Petfinder::pet_vars($pet);
+				}
+			}
+			else
+			{
+				$results[] = Petfinder::pet_vars($pets_found);
+			}
+		}
+
+		$search_results['results'] = $results;
+
+		return $search_results;
 	}
 
 	/**
