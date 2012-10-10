@@ -48,7 +48,7 @@ class Petfinder {
 		// Bring altogether to form our complete URI
 		$api_connect = Petfinder::$endpoint.$method.'?format='.$api_format.'&key='.$api_key.$api_params;
 
-		// Call the resource and cast it into an array to deal with
+		// Call the resource and grab the results after it is parsed
 		$request = Request::factory($api_connect)->execute();
 		$response = Petfinder::parse($request);
 
@@ -59,7 +59,7 @@ class Petfinder {
 	 * Parse the resource sent from the API and try to render it in a format to better deal with.
 	 * Casts the result from either XML or JSON format into an array
 	 *
-	 * @param   object  resource as return by API call
+	 * @param   object  resource as returned by API call
 	 * @return  array
 	 * @uses    Kohana::$config
 	 * @uses    Petfinder::parse
@@ -80,6 +80,7 @@ class Petfinder {
 			$parsed = $response->petfinder;
 		}
 
+		// If response from API is not 100 PFAPI_OK, something is wrong
 		if ( ($api_format == 'xml' AND $parsed->header->status->code != 100) OR ($api_format == 'json' AND $parsed->header->status->code->{'$t'} != 100) )
 		{
 			$error = ($api_format == 'xml') ? $parsed->header->status->message : $parsed->header->status->message->{'$t'};
@@ -93,7 +94,7 @@ class Petfinder {
 	/**
 	 * Fetches a list of breeds per animal type chosen
 	 *
-	 * @param   string   Petfinder pet ID
+	 * @param   string   animal type to list its breeds
 	 * @return  array
 	 * @uses    Kohana::$config
 	 * @uses    Petfinder::connect
@@ -177,15 +178,13 @@ class Petfinder {
 	 * @uses    Petfinder::search
 	 * @uses    Petfinder::pet_vars
 	 */
-	public static function search_pets($query = '')
+	public static function search_pets($filter = '')
 	{
 		$format_type = Kohana::$config->load('petfinder.format');
 
-		$query['output'] = 'full';
+		$filter['output'] = 'full';
 
-		$response = Petfinder::search('pet.find', $query);
-
-		$search_results['lastOffset'] = ($format_type == 'xml') ? $response['lastOffset'] : $response['lastOffset']->{'$t'};
+		$response = Petfinder::search('pet.find', $filter);
 		$pets_found = $response['pets']->pet;
 
 		foreach ($pets_found as $pet_id => $pet)
@@ -194,6 +193,7 @@ class Petfinder {
 		}
 
 		$search_results['results'] = $results;
+		$search_results['lastOffset'] = ($format_type == 'xml') ? $response['lastOffset'] : $response['lastOffset']->{'$t'};
 
 		return $search_results;
 	}
@@ -207,13 +207,11 @@ class Petfinder {
 	 * @uses    Petfinder::search
 	 * @uses    Petfinder::shelter_vars
 	 */
-	public static function search_shelters($query = '')
+	public static function search_shelters($filter = '')
 	{
 		$format_type = Kohana::$config->load('petfinder.format');
 
-		$response = Petfinder::search('shelter.find', $query);
-
-		$search_results['lastOffset'] = ($format_type == 'xml') ? $response['lastOffset'] : $response['lastOffset']->{'$t'};
+		$response = Petfinder::search('shelter.find', $filter);
 		$shelters_found = $response['shelters']->shelter;
 
 		foreach ($shelters_found as $shelter_id => $shelter)
@@ -222,13 +220,14 @@ class Petfinder {
 		}
 
 		$search_results['results'] = $results;
+		$search_results['lastOffset'] = ($format_type == 'xml') ? $response['lastOffset'] : $response['lastOffset']->{'$t'};
 
 		return $search_results;
 	}
 
 	/**
 	 * Format the array to send to the API resource to trigger the search.
-	 * Checks that a location is supplied in the array as it is a required parameter.
+	 * Checks that a shelter ID is supplied in the array as it is a required parameter.
 	 *
 	 * @param   string   shelter ID
 	 * @return  object
@@ -261,7 +260,7 @@ class Petfinder {
 	 * @return  array
 	 * @uses    Kohana::$config
 	 * @uses    Petfinder::connect
-	 * @uses    Petfinder::shelter_vars
+	 * @uses    Petfinder::pet_vars
 	 * @throws  Kohana_Exception
 	 */
 	public static function shelter_pets($shelter_id, $filter = '')
@@ -308,6 +307,46 @@ class Petfinder {
 		}
 
 		$search_results['results'] = $results;
+		$search_results['lastOffset'] = ($format_type == 'xml') ? $response['lastOffset'] : $response['lastOffset']->{'$t'};
+
+		return $search_results;
+	}
+
+	/**
+	 * Get a list of Petfinder IDs that belong to an individual shelter
+	 *
+	 * @param   array    search parameters to send
+	 * @return  array
+	 * @uses    Petfinder::connect
+	 * @uses    Petfinder::shelter_vars
+	 * @throws  Kohana_Exception
+	 */
+	public static function shelter_breeds($filter)
+	{
+		// Need to have at least the animal type and one of its breeds before we can send to API
+		if (is_array($filter) AND isset($filter['animal']) AND isset($filter['breed']))
+		{
+			foreach ($filter as $filter_key => $filter_type)
+			{
+				$filter_keys[] = $filter_key.'='.$filter_type;
+			}
+
+			$filter = implode('&', $filter_keys);
+		}
+		else
+		{
+			throw new Kohana_Exception('Please enter at least both an animal type (barnyard, bird, cat, dog, horse, pig, reptile, smallfurry) and one of its breeds.');
+		}
+
+		$response = Petfinder::connect('shelter.listByBreed', '&'.$filter);
+		$shelters_found = $response['shelters']->shelter;
+
+		foreach ($shelters_found as $shelter_id => $shelter)
+		{
+			$results[] = Petfinder::shelter_vars($shelter);
+		}
+
+		$search_results['results'] = $results;
 
 		return $search_results;
 	}
@@ -322,18 +361,18 @@ class Petfinder {
 	 * @uses    Petfinder::connect
 	 * @throws  Kohana_Exception
 	 */
-	public static function search($search_mode, $query = '')
+	public static function search($search_mode, $filter = '')
 	{
-		if (is_array($query))
+		if (is_array($filter))
 		{
-			if (isset($query['location']))
+			if (isset($filter['location']))
 			{
-				foreach ($query as $search_key => $search_type)
+				foreach ($filter as $search_key => $search_type)
 				{
 					$search_keys[] = $search_key.'='.$search_type;
 				}
 
-				$query = implode('&', $search_keys);
+				$filter = implode('&', $search_keys);
 			}
 			else
 			{
@@ -345,7 +384,7 @@ class Petfinder {
 			throw new Kohana_Exception('Please enter at least a location to search against.');
 		}
 
-		$response = Petfinder::connect($search_mode, '&'.$query);
+		$response = Petfinder::connect($search_mode, '&'.$filter);
 
 		return $response;
 	}
