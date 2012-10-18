@@ -1,85 +1,80 @@
-<?php  defined('SYSPATH') or die('No direct script access.');
+<div class="petinfo">
+<h1><?php echo $info['name'] ?></h1>
+<?php
 
-$output = '';
-
-$current_pet = $pet;
-
-$output .= '<div class="petinfo">';
-$output .= '<h1>'.$current_pet->name.$status_heading.'</h1>';
-
-if (isset($current_pet->media->photos) AND count($current_pet->media->photos) > 0)
-	$thumbnail = $current_pet->media->photos->photo[0];
-else
-	$thumbnail = Kohana::$config->load('petfinder.image_none');
-
-$output .= HTML::image($thumbnail, array('title' => $current_pet->name));
-
-$output .= '<div class="petfinderStats">';
-
-$output .= '<div class="petfinderInfo">';
-$output .= $current_pet->description;
-$output .= '</div>';
-
-$output .= '<dl class="petfinderBio">';
-$output .= '<dt class="petfinderBioLabel">Petfinder ID</dt><dd class="petfinderBioData">'.$current_pet->id.'</dd>';
-$output .= '<dt class="petfinderBioLabel">Age</dt><dd class="petfinderBioData">'.$current_pet->age.'</dd>';
-$output .= '<dt class="petfinderBioLabel">Sex</dt><dd class="petfinderBioData">'.$legend_sex.'</dd>';
-
-$output .= '<dt class="petfinderBioLabel">Breed</dt><dd class="petfinderBioData">';
-
-$count_breeds = count($current_pet->breeds->breed);
-
-if ($count_breeds == 1)
+if (isset($info['media'][1]['x']))
 {
-	$output .= $current_pet->breeds->breed;
+	$thumbnail = $info['media'][1]['x'];
+	echo HTML::image($thumbnail, array('alt' => $info['name']));
+}
+
+?>
+<div class="petfinderStats">
+<div class="petfinderInfo">
+<?php echo $info['description'] ?>
+</div>
+<dl class="petfinderBio">
+<dt class="petfinderBioLabel">Petfinder ID</dt><dd class="petfinderBioData"><?php echo $info['id'] ?></dd>
+<dt class="petfinderBioLabel">Status</dt><dd class="petfinderBioData"><?php echo $info['status'] ?></dd>
+<dt class="petfinderBioLabel">Age</dt><dd class="petfinderBioData"><?php echo $info['age'] ?></dd>
+<dt class="petfinderBioLabel">Sex</dt><dd class="petfinderBioData"><?php echo $info['sex'] ?></dd>
+<dt class="petfinderBioLabel">Breed</dt><dd class="petfinderBioData">
+<?php
+
+if (Arr::is_array($info['breed']))
+{
+	echo implode(' and ', $info['breed']);
 }
 else
 {
-	$breeds = '';
-
-	foreach ($current_pet->breeds->breed as $pet_breed)
-	{
-		$breeds .= $pet_breed.' and ';
-	}
-
-	$output .= substr($breeds, 0, strrpos($breeds, ' and'));
+	echo $info['breed'];
 }
 
-$output .= ($current_pet->mix == 'yes') ? ' mix' : '';
+?>
+</dd>
+<?php
 
-$output .= '</dd>';
-
-if (isset($options))
+if (isset($info['options']))
 {
-	$output .= '<dt class="petfinderBioLabel">Details</dt><dd class="petfinderBioData">';
-	$output .= '<ul>';
-
-	foreach ($options as $pet_data)
+?>
+	<dt class="petfinderBioLabel">Details</dt><dd class="petfinderBioData">
+	<ul>
+<?php
+	$option_count = count($info['options']);
+	for ($i = 0; $i < $option_count; $i++)
 	{
-		$output .= '<li>'.$pet_data.'</li>';
+		echo '<li>'.$info['options'][$i].'</li>';
 	}
-
-	$output .= '</ul>';
-	$output .= '</dd>';
+?>
+	</ul>
+	</dd>
+<?php
 }
 
-if ($current_pet->status == 'A')
+if ($info['status'] == 'A')
 {
-	$output .= '<dt class="petfinderBioLabel">Contact</dt>';
+?>
+	<dt class="petfinderBioLabel">Contact</dt>
+<?php
+	$name_contact = ($info['contact_name'] != '') ? $info['contact_name'] : 'Contact us';
 
-	$name_contact = ($current_pet->contact->name != '') ? $current_pet->contact->name : 'Contact us';
-
-	if ($current_pet->contact->email != '')
-		$output .= '<dd class="petfinderBioData">'.HTML::mailto($current_pet->contact->email.'?subject=Petfinder: '.$current_pet->name, $name_contact).'</dd>';
+	if ($info['contact_email'] != '')
+	{
+		$contact_method = HTML::mailto($info['contact_email'].'?subject=Petfinder: '.$info['name'], $name_contact);
+	}
 	else
-		$output .= '<dd class="petfinderBioData">'.HTML::anchor('http://www.petfinder.com/petdetail/'.$current_pet->id, 'See contact details on Petfinder').'</dd>';
+	{
+		$contact_method = HTML::anchor('http://www.petfinder.com/petdetail/'.$info['id'], 'See contact details on Petfinder');
+	}
+
+	?>
+	<dd class="petfinderBioData"><?php echo $contact_method ?></dd>
+	<?php
 }
-
-$output .= '</dl>';
-$output .= '</div>';
-$output .= '</div>';
-
-$output .= '<p>'.HTML::anchor($url_main, 'Back to main list of pets').'</p>';
-
-echo $output;
-
+?>
+	<dt class="petfinderBioLabel">Shelter Contact</dt>
+	<dd class="petfinderBioData">Address: <?php echo $info['contact_address1'] ?> <?php echo $info['contact_address2'] ?> <?php echo $info['contact_city'] ?> <?php echo $info['contact_state'] ?> <?php echo $info['contact_zip'] ?></dd>
+	<dd class="petfinderBioData">Phone: <?php echo $info['contact_phone'] ?>, Fax: <?php echo $info['contact_fax'] ?></dd>
+</dl>
+</div>
+</div>
