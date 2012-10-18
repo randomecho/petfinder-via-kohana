@@ -41,7 +41,7 @@ More examples on how to call up the Petfinder module can be found in the **appli
 
 With your API key and secret, head on over to **modules/petfinder/config/petfinder.php** and drop them in.
 
-You can select either XML or JSON format for the Petfinder API return results, but as the module will render the data in a no fuss manner no matter what you choose, it doesn't really matter.
+You can select either XML or JSON format for the Petfinder API return results, but as the module will render the data in a no fuss, single format whatever you choose, it doesn't really matter.
 
 ## API key
 
