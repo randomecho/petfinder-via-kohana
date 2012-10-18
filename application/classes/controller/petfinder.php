@@ -1,99 +1,176 @@
-<?php defined('SYSPATH') or die('No direct script access.');
-
+<?php defined('SYSPATH') OR die('No direct script access.');
 /**
- * Petfinder listing and display
+ * Petfinder via Kohana - Examples
  *
- * @package    Petfinder via Kohana
- * @category   Core
+ * Basic controller that showcases calls to the Petfinder API module
+ *
+ * In this example, we are extending a template controller called Controller_TemplateIndex
+ * that catches and displays its content in the $this->template->content variable.
+ *
+ * @package    Petfinder
  * @author     Soon Van - randomecho.com
  * @copyright  2012 Soon Van
  * @license    http://www.opensource.org/licenses/BSD-3-Clause
+ * @version    2.0
  */
 
 class Controller_Petfinder extends Controller_TemplateIndex {
 
-	/**
-	 * Request the list of adoptable pets from Petfinder via their RESTful API.
-	 * If a list is available, render the collection of pets found.
-	 * Otherwise show the view saying there are none available.
-	 *
-	 */
 	public function action_index()
 	{
-		$adoptable = simplexml_load_file(Kohana::$config->load('petfinder.api_url').
-								Kohana::$config->load('petfinder.get_shelterpets').
-								'?key='.Kohana::$config->load('petfinder.api_key').
-								'&id='.Kohana::$config->load('petfinder.shelter_id'));
-
-		if ($adoptable->header->status->code == 100 AND count( (array) $adoptable->pets) > 0)
-		{
-			$shelter_pets = (array) $adoptable->pets;
-
-			$shelter_pets['legend'] = Kohana::message('petfinder');
-			$shelter_pets['url_details'] = Kohana::$config->load('petfinder.url_route').'/details/';
-
-			$this->template->content = View::factory('petfinder_multi', $shelter_pets);
-		}
-		else
-		{
-			$info['url_main'] = Kohana::$config->load('petfinder.url_route');
-			$info['error_message'] = Kohana::message('petfinder', 'error.none');
-			$info['error_heading'] = Kohana::message('petfinder', 'error.none_heading');
-
-			$this->template->content = View::factory('petfinder_none', $info);
-		}
-
-		$this->template->title = Kohana::message('petfinder', 'meta.title').' - '.$this->template->title;
+		$this->template->content = View::factory('petfinder_intro');
 	}
 
 	/**
-	 * Display the details of an individual pet as requested from the list
-	 * Reject showing if it doesn't contain the pet name in URL and bounce back to main list
-	 * If the URL is correct, but pet ID is invalid, display the error message view
+	 *   Example URL call:
+	 *   pet/17691749
 	 *
 	 */
-	public function action_details()
+	public function action_pet()
 	{
-		$id_pet = $this->request->param('id');
+		$pet_id = $this->request->param('id');
 
-		// reject as invalid if not parsed by the site with nice url featuring pet name
-		if ( ! stristr($id_pet, '-'))
-			Request::current()->redirect($this->template->baseurl.Kohana::$config->load('petfinder.url_route'));
+		$result['info'] = Petfinder::single($pet_id);
 
-		$url_pet = explode('-', $id_pet);
-		$id_pet = (int) $url_pet[0];
+		$this->template->content = View::factory('petfinder_single', $result);
+	}
 
-		$pet_details = simplexml_load_file(Kohana::$config->load('petfinder.api_url').
-								Kohana::$config->load('petfinder.get_pet').
-								'?key='.Kohana::$config->load('petfinder.api_key').
-								'&id='.$id_pet);
+	/**
+	 *   Example URL call:
+	 *   random
+	 *   random?animal=bird
+	 *   random?animal=pig&sex=M
+	 *
+	 */
+	public function action_random()
+	{
+		$filter = $this->request->query();
 
-		if ($pet_details->header->status->code == 100)
+		$result['info'] = Petfinder::random($filter);
+
+		$this->template->content = View::factory('petfinder_single', $result);
+	}
+
+	/**
+	 *   Example URL call:
+	 *   search?location=40509
+	 *   search?location=10016&animal=reptile
+	 *
+	 */
+	public function action_search()
+	{
+		$filter = $this->request->query();
+		$pet_profiles = '';
+
+		$found = Petfinder::search_pets($filter);
+
+		foreach ($found['results'] as $pet_details)
 		{
-			$shelter_pets['pet'] = $pet_details->pet;
-			$shelter_pets['status_heading'] = Kohana::message('petfinder', 'status_heading.'.$pet_details->pet->status);
-			$shelter_pets['legend_sex'] = Kohana::message('petfinder', 'legend_sex.'.$pet_details->pet->sex);
+			$pet_info['info'] = $pet_details;
+			$pet_profiles .= View::factory('petfinder_single', $pet_info);
+		}
 
-			foreach ($pet_details->pet->options->option as $option)
+		$result['info'] = $pet_profiles;
+
+		$this->template->content = View::factory('petfinder_info', $result);
+	}
+
+	/**
+	 *   Example URL call:
+	 *   breeds/horse
+	 *   breeds/dog
+	 *
+	 */
+	public function action_breeds()
+	{
+		$animal = $this->request->param('id');
+
+		$result['info'] = Petfinder::breeds($animal);
+
+		$this->template->content = View::factory('petfinder_list_breeds', $result);
+	}
+
+	/**
+	 *   Example URL call:
+	 *   shelter/KY361
+	 *
+	 */
+	public function action_shelter()
+	{
+		$filter = $this->request->query();
+		$shelter_id = $this->request->param('id');
+
+		if (is_null($shelter_id))
+		{
+			$found = Petfinder::search_shelters($filter);
+			$profiles = '';
+
+			foreach ($found['results'] as $details)
 			{
-				$shelter_pets['options'][] = Kohana::message('petfinder', 'legend_options.'.$option);
+				$profile_info['info'] = $details;
+				$profiles .= View::factory('petfinder_shelter', $profile_info);
 			}
 
-			$shelter_pets['url_main'] = Kohana::$config->load('petfinder.url_route');
-
-			$this->template->content = View::factory('petfinder_single', $shelter_pets);
-			$this->template->title = $pet_details->pet->name.$shelter_pets['status_heading'].' - '.$this->template->title;
+			$result['info'] = $profiles;
 		}
 		else
 		{
-			$info['url_main'] = Kohana::$config->load('petfinder.url_route');
-			$info['error_message'] = Kohana::message('petfinder', 'error.invalid');
-			$info['error_heading'] = Kohana::message('petfinder', 'error.invalid_heading');
+			$found['info'] = Petfinder::shelter($shelter_id);
 
-			$this->template->content = View::factory('petfinder_none', $info);
-			$this->template->title = Kohana::message('petfinder', 'meta.invalid').' - '.$this->template->title;
+			$result['info'] = View::factory('petfinder_shelter', $found);
 		}
 
+		$this->template->content = View::factory('petfinder_info', $result);
+	}
+
+	/**
+	 *   Example URL call:
+	 *   shelterpets/KY361
+	 *   shelterpets/CA154?animal=dog
+	 *
+	 */
+	public function action_shelterpets()
+	{
+		$shelter_id = $this->request->param('id');
+		$filter = $this->request->query();
+		$pet_profiles = '';
+
+		$found = Petfinder::shelter_pets($shelter_id, $filter);
+
+		foreach ($found['results'] as $pet_details)
+		{
+			$pet_info['info'] = $pet_details;
+			$pet_profiles .= View::factory('petfinder_single', $pet_info);
+		}
+
+		$result['info'] = $pet_profiles;
+
+		$this->template->content = View::factory('petfinder_info', $result);
+	}
+
+
+	/**
+	 *   Example URL call:
+	 *   shelterbreeds?animal=dog&breed=basenji
+	 *   shelterbreeds?animal=cat&breed=silver
+	 *
+	 */
+	public function action_shelterbreeds()
+	{
+		$filter = $this->request->query();
+		$shelter_profiles = '';
+
+		$found = Petfinder::shelter_breeds($filter);
+
+		foreach ($found['results'] as $details)
+		{
+			$shelter['info'] = $details;
+			$shelter_profiles .= View::factory('petfinder_shelter', $shelter);
+		}
+
+		$result['info'] = $shelter_profiles;
+
+		$this->template->content = View::factory('petfinder_info', $result);
 	}
 
 }
