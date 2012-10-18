@@ -145,7 +145,7 @@ class Petfinder {
 	/**
 	 * Generate the random API return with optional parameters to narrow the random selection
 	 *
-	 * @param   string   API search parameters
+	 * @param   array    API search parameters
 	 * @return  array
 	 * @uses    Petfinder::connect
 	 * @uses    Petfinder::pet_vars
@@ -161,6 +161,10 @@ class Petfinder {
 
 			$filter = '&'.implode('&', $filter_keys);
 		}
+		else
+		{
+			$filter = '';
+		}
 
 		$response = Petfinder::connect('pet.getRandom', '&output=full'.$filter);
 
@@ -172,7 +176,7 @@ class Petfinder {
 	/**
 	 * Sends for and returns results for searching pets
 	 *
-	 * @param   string   API search parameters
+	 * @param   array    API search parameters
 	 * @return  array
 	 * @uses    Kohana::$config
 	 * @uses    Petfinder::search
@@ -201,7 +205,7 @@ class Petfinder {
 	/**
 	 * Sends for and returns results for searching shelters
 	 *
-	 * @param   string   API search parameters
+	 * @param   array    API search parameters
 	 * @return  array
 	 * @uses    Kohana::$config
 	 * @uses    Petfinder::search
